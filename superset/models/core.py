@@ -127,7 +127,9 @@ class ConfigurationMethod(StrEnum):
     DYNAMIC_FORM = "dynamic_form"
 
 
-class Database(Model, AuditMixinNullable, ImportExportMixin):  # pylint: disable=too-many-public-methods
+class Database(
+    Model, AuditMixinNullable, ImportExportMixin
+):  # pylint: disable=too-many-public-methods
     """An ORM object that stores Database related information"""
 
     __tablename__ = "dbs"
@@ -401,9 +403,7 @@ class Database(Model, AuditMixinNullable, ImportExportMixin):  # pylint: disable
         return (
             username
             if (username := get_username())
-            else object_url.username
-            if self.impersonate_user
-            else None
+            else object_url.username if self.impersonate_user else None
         )
 
     @contextmanager
@@ -1150,26 +1150,7 @@ class Database(Model, AuditMixinNullable, ImportExportMixin):  # pylint: disable
         return self.db_engine_spec.get_oauth2_config()
 
     def start_oauth2_dance(self) -> None:
-        """
-        Start the OAuth2 dance.
-
-        This method is called when an OAuth2 error is encountered, and the database is
-        configured to use OAuth2 for authentication. It raises an exception that will
-        trigger the OAuth2 dance in the frontend.
-        """
         return self.db_engine_spec.start_oauth2_dance(self)
-
-    def purge_oauth2_tokens(self) -> None:
-        """
-        Delete all OAuth2 tokens associated with this database.
-
-        This is needed when the configuration changes. For example, a new client ID and
-        secret probably will require new tokens. The same is valid for changes in the
-        scope or in the endpoints.
-        """
-        db.session.query(DatabaseUserOAuth2Tokens).filter(
-            DatabaseUserOAuth2Tokens.id == self.id
-        ).delete()
 
 
 sqla.event.listen(Database, "after_insert", security_manager.database_after_insert)

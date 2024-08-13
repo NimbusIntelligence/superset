@@ -89,7 +89,9 @@ class TestConnectionDatabaseCommand(BaseCommand):
         self._context = context
         self._uri = uri
 
-    def run(self) -> None:  # pylint: disable=too-many-statements,too-many-branches  # noqa: C901
+    def run(
+        self,
+    ) -> None:  # pylint: disable=too-many-statements,too-many-branches  # noqa: C901
         self.validate()
         ex_str = ""
         ssh_tunnel = self._properties.get("ssh_tunnel")
@@ -147,7 +149,6 @@ class TestConnectionDatabaseCommand(BaseCommand):
                         extra={"sqlalchemy_uri": database.sqlalchemy_uri},
                     ) from ex
                 except Exception as ex:  # pylint: disable=broad-except
-                    # If the connection failed because OAuth2 is needed, start the flow.
                     if (
                         database.is_oauth2_enabled()
                         and database.db_engine_spec.needs_oauth2(ex)
@@ -206,7 +207,6 @@ class TestConnectionDatabaseCommand(BaseCommand):
                 ),
                 engine=database.db_engine_spec.__name__,
             )
-            # bubble up the exception to return proper status code
             raise
         except Exception as ex:
             if database.is_oauth2_enabled() and database.db_engine_spec.needs_oauth2(

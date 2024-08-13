@@ -142,7 +142,9 @@ builtin_time_grains: dict[str | None, str] = {
 }
 
 
-class TimestampExpression(ColumnClause):  # pylint: disable=abstract-method, too-many-ancestors
+class TimestampExpression(
+    ColumnClause
+):  # pylint: disable=abstract-method, too-many-ancestors
     def __init__(self, expr: str, col: ColumnClause, **kwargs: Any) -> None:
         """Sqlalchemy class that can be used to render native column elements respecting
         engine-specific quoting rules as part of a string-based expression.
@@ -386,9 +388,9 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
     max_column_name_length: int | None = None
     try_remove_schema_from_table_name = True  # pylint: disable=invalid-name
     run_multiple_statements_as_one = False
-    custom_errors: dict[
-        Pattern[str], tuple[str, SupersetErrorType, dict[str, Any]]
-    ] = {}
+    custom_errors: dict[Pattern[str], tuple[str, SupersetErrorType, dict[str, Any]]] = (
+        {}
+    )
 
     # List of JSON path to fields in `encrypted_extra` that should be masked when the
     # database is edited. By default everything is masked.
@@ -425,7 +427,6 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
     oauth2_scope = ""
     oauth2_authorization_request_uri: str | None = None  # pylint: disable=invalid-name
     oauth2_token_request_uri: str | None = None
-    oauth2_token_request_type = "data"  # noqa: S105
 
     # Driver-specific exception that should be mapped to OAuth2RedirectError
     oauth2_exception = OAuth2RedirectError
@@ -482,11 +483,11 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
             # message.
             "tab_id": tab_id,
         }
-        oauth2_config = database.get_oauth2_config()
-        if oauth2_config is None:
+        config = database.get_oauth2_config()
+        if config is None:
             raise OAuth2Error("No configuration found for OAuth2")
 
-        oauth_url = cls.get_oauth2_authorization_uri(oauth2_config, state)
+        oauth_url = cls.get_oauth2_authorization_uri(config, state)
 
         raise OAuth2RedirectError(oauth_url, tab_id, default_redirect_uri)
 

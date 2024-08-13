@@ -110,6 +110,7 @@ from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.exceptions import (
     DatabaseNotFoundException,
     InvalidPayloadSchemaError,
+    OAuth2Error,
     OAuth2RedirectError,
     SupersetErrorsException,
     SupersetException,
