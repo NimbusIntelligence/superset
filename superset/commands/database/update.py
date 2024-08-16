@@ -41,6 +41,7 @@ from superset.commands.database.ssh_tunnel.update import UpdateSSHTunnelCommand
 from superset.commands.database.sync_permissions import SyncPermissionsCommand
 from superset.daos.database import DatabaseDAO
 from superset.databases.ssh_tunnel.models import SSHTunnel
+from superset.db_engine_specs.base import GenericDBException
 from superset.exceptions import OAuth2RedirectError
 from superset.models.core import Database
 from superset.utils import json
@@ -96,31 +97,9 @@ class UpdateDatabaseCommand(BaseCommand):
         database = DatabaseDAO.update(self._model, self._properties)
         database.set_sqlalchemy_uri(database.sqlalchemy_uri)
         ssh_tunnel = self._handle_ssh_tunnel(database)
-        new_catalog = database.get_default_catalog()
-
-        # update assets when the database catalog changes, if the database was not
-        # configured with multi-catalog support; if it was enabled or is enabled in the
-        # update we don't update the assets
-        if (
-            force_update
-            or new_catalog != original_catalog
-            and not self._model.allow_multi_catalog
-            and not database.allow_multi_catalog
-        ):
-            self._update_catalog_attribute(self._model.id, new_catalog)
-
-        # if the database name changed we need to update any existing permissions,
-        # since they're name based
         try:
-            current_username = get_username()
-            SyncPermissionsCommand(
-                self._model_id,
-                current_username,
-                old_db_connection_name=original_database_name,
-                db_connection=database,
-                ssh_tunnel=ssh_tunnel,
-            ).run()
-        except (OAuth2RedirectError, MissingOAuth2TokenError):
+            self._refresh_catalogs(database, original_database_name, ssh_tunnel)
+        except OAuth2RedirectError:
             pass
 
         return database
@@ -186,8 +165,45 @@ class UpdateDatabaseCommand(BaseCommand):
 
     def _update_catalog_attribute(
         self,
-        database_id: int,
-        new_catalog: str | None,
+        database: Database,
+        ssh_tunnel: SSHTunnel | None,
+    ) -> set[str]:
+        """
+        Helper method to load catalogs.
+        """
+        try:
+            return database.get_all_catalog_names(
+                force=True,
+                ssh_tunnel=ssh_tunnel,
+            )
+        except OAuth2RedirectError:
+            raise
+        except GenericDBException as ex:
+            raise DatabaseConnectionFailedError() from ex
+
+    def _get_schema_names(
+        self,
+        database: Database,
+        catalog: str | None,
+        ssh_tunnel: SSHTunnel | None,
+    ) -> set[str]:
+        """
+        Helper method to load schemas.
+        """
+        try:
+            return database.get_all_schema_names(
+                force=True,
+                catalog=catalog,
+                ssh_tunnel=ssh_tunnel,
+            )
+        except GenericDBException as ex:
+            raise DatabaseConnectionFailedError() from ex
+
+    def _refresh_catalogs(
+        self,
+        database: Database,
+        original_database_name: str,
+        ssh_tunnel: SSHTunnel | None,
     ) -> None:
         """
         Update the catalog of the datasets that are associated with database.
