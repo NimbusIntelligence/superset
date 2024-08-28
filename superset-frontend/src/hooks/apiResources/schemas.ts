@@ -84,7 +84,7 @@ export function useSchemas(options: Params) {
 
   useEffect(() => {
     if (result.isError) {
-      onError?.(result.error as ClientErrorObject);
+      onError?.(result.error);
     }
   }, [result.isError, result.error, onError]);
 
@@ -101,7 +101,7 @@ export function useSchemas(options: Params) {
               onSuccess?.(data || EMPTY_SCHEMAS, forceRefresh);
             }
             if (isError) {
-              onError?.(result.error as ClientErrorObject);
+              onError?.(result.error);
             }
           },
         );
