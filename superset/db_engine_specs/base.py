@@ -392,11 +392,6 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         {}
     )
 
-    # List of JSON path to fields in `encrypted_extra` that should be masked when the
-    # database is edited. By default everything is masked.
-    # pylint: disable=invalid-name
-    encrypted_extra_sensitive_fields: set[str] = {"$.*"}
-
     # Whether the engine supports file uploads
     # if True, database will be listed as option in the upload file form
     supports_file_upload = True

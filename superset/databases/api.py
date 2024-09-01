@@ -1767,7 +1767,224 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
                 parameters["table_name"],
                 parameters["file"],
                 parameters.get("schema"),
-                reader,
+                CSVReader(parameters),
+            ).run()
+        except ValidationError as error:
+            return self.response_400(message=error.messages)
+        return self.response(201, message="OK")
+
+    @expose("/excel_metadata/", methods=("POST",))
+    @protect()
+    @statsd_metrics
+    @event_logger.log_this_with_context(
+        action=(
+            lambda self, *args, **kwargs: f"{self.__class__.__name__}" ".excel_metadata"
+        ),
+        log_to_statsd=False,
+    )
+    @requires_form_data
+    def excel_metadata(self) -> Response:
+        """Upload an Excel file and returns file metadata.
+        ---
+        post:
+          summary: Upload an Excel file and returns file metadata
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  $ref: '#/components/schemas/ExcelMetadataUploadFilePostSchema'
+          responses:
+            200:
+              description: Columnar upload response
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      result:
+                        $ref: '#/components/schemas/UploadFileMetadata'
+            400:
+              $ref: '#/components/responses/400'
+            401:
+              $ref: '#/components/responses/401'
+            404:
+              $ref: '#/components/responses/404'
+            500:
+              $ref: '#/components/responses/500'
+        """
+        try:
+            request_form = request.form.to_dict()
+            request_form["file"] = request.files.get("file")
+            parameters = ExcelMetadataUploadFilePostSchema().load(request_form)
+        except ValidationError as error:
+            return self.response_400(message=error.messages)
+        metadata = ExcelReader().file_metadata(parameters["file"])
+        return self.response(200, result=UploadFileMetadata().dump(metadata))
+
+    @expose("/<int:pk>/excel_upload/", methods=("POST",))
+    @protect()
+    @statsd_metrics
+    @event_logger.log_this_with_context(
+        action=lambda self, *args, **kwargs: f"{self.__class__.__name__}.excel_upload",
+        log_to_statsd=False,
+    )
+    @requires_form_data
+    def excel_upload(self, pk: int) -> Response:
+        """Upload an Excel file into a database.
+        ---
+        post:
+          summary: Upload an Excel file to a database table
+          parameters:
+          - in: path
+            schema:
+              type: integer
+            name: pk
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  $ref: '#/components/schemas/ExcelUploadPostSchema'
+          responses:
+            201:
+              description: Excel upload response
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+            400:
+              $ref: '#/components/responses/400'
+            401:
+              $ref: '#/components/responses/401'
+            404:
+              $ref: '#/components/responses/404'
+            422:
+              $ref: '#/components/responses/422'
+            500:
+              $ref: '#/components/responses/500'
+        """
+        try:
+            request_form = request.form.to_dict()
+            request_form["file"] = request.files.get("file")
+            parameters = ExcelUploadPostSchema().load(request_form)
+            UploadCommand(
+                pk,
+                parameters["table_name"],
+                parameters["file"],
+                parameters.get("schema"),
+                ExcelReader(parameters),
+            ).run()
+        except ValidationError as error:
+            return self.response_400(message=error.messages)
+        return self.response(201, message="OK")
+
+    @expose("/columnar_metadata/", methods=("POST",))
+    @protect()
+    @statsd_metrics
+    @event_logger.log_this_with_context(
+        action=lambda self, *args, **kwargs: f"{self.__class__.__name__}"
+        ".columnar_metadata",
+        log_to_statsd=False,
+    )
+    @requires_form_data
+    def columnar_metadata(self) -> Response:
+        """Upload a Columnar file and returns file metadata.
+        ---
+        post:
+          summary: Upload a Columnar file and returns file metadata
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  $ref: '#/components/schemas/ColumnarMetadataUploadFilePostSchema'
+          responses:
+            200:
+              description: Columnar upload response
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      result:
+                        $ref: '#/components/schemas/UploadFileMetadata'
+            400:
+              $ref: '#/components/responses/400'
+            401:
+              $ref: '#/components/responses/401'
+            404:
+              $ref: '#/components/responses/404'
+            500:
+              $ref: '#/components/responses/500'
+        """
+        try:
+            request_form = request.form.to_dict()
+            request_form["file"] = request.files.get("file")
+            parameters = ColumnarMetadataUploadFilePostSchema().load(request_form)
+        except ValidationError as error:
+            return self.response_400(message=error.messages)
+        metadata = ColumnarReader().file_metadata(parameters["file"])
+        return self.response(200, result=UploadFileMetadata().dump(metadata))
+
+    @expose("/<int:pk>/columnar_upload/", methods=("POST",))
+    @protect()
+    @statsd_metrics
+    @event_logger.log_this_with_context(
+        action=lambda self, *args, **kwargs: f"{self.__class__.__name__}.columnar_upload",
+        log_to_statsd=False,
+    )
+    @requires_form_data
+    def columnar_upload(self, pk: int) -> Response:
+        """Upload a Columnar file into a database.
+        ---
+        post:
+          summary: Upload a Columnar file to a database table
+          parameters:
+          - in: path
+            schema:
+              type: integer
+            name: pk
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  $ref: '#/components/schemas/ColumnarUploadPostSchema'
+          responses:
+            201:
+              description: Columnar upload response
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+            400:
+              $ref: '#/components/responses/400'
+            401:
+              $ref: '#/components/responses/401'
+            404:
+              $ref: '#/components/responses/404'
+            422:
+              $ref: '#/components/responses/422'
+            500:
+              $ref: '#/components/responses/500'
+        """
+        try:
+            request_form = request.form.to_dict()
+            request_form["file"] = request.files.get("file")
+            parameters = ColumnarUploadPostSchema().load(request_form)
+            UploadCommand(
+                pk,
+                parameters["table_name"],
+                parameters["file"],
+                parameters.get("schema"),
+                ColumnarReader(parameters),
             ).run()
         except ValidationError as error:
             return self.response_400(message=error.messages)
@@ -1890,7 +2107,6 @@ class DatabaseRestApi(BaseSupersetModelRestApi):
                 "sqlalchemy_uri_placeholder": engine_spec.sqlalchemy_uri_placeholder,
                 "preferred": engine_spec.engine_name in preferred_databases,
                 "engine_information": engine_spec.get_public_information(),
-                "supports_oauth2": engine_spec.supports_oauth2,
             }
 
             if engine_spec.default_driver:

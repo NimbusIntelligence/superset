@@ -18,9 +18,113 @@
  */
 import { SupersetTheme } from '@superset-ui/core';
 import { Form } from 'src/components/Form';
-import { FormFieldOrder, FORM_FIELD_MAP } from './constants';
+import {
+  accessTokenField,
+  databaseField,
+  defaultCatalogField,
+  defaultSchemaField,
+  displayField,
+  forceSSLField,
+  hostField,
+  httpPath,
+  httpPathField,
+  passwordField,
+  portField,
+  queryField,
+  usernameField,
+} from './CommonParameters';
+import { validatedInputField } from './ValidatedInputField';
+import { EncryptedField } from './EncryptedField';
+import { OAuth2ClientField } from './OAuth2ClientField';
+import { TableCatalog } from './TableCatalog';
 import { formScrollableStyles, validatedFormStyles } from '../styles';
-import { DatabaseConnectionFormProps } from '../../types';
+import { DatabaseForm, DatabaseObject } from '../../types';
+import SSHTunnelSwitch from '../SSHTunnelSwitch';
+
+export const FormFieldOrder = [
+  'host',
+  'port',
+  'database',
+  'default_catalog',
+  'default_schema',
+  'username',
+  'password',
+  'access_token',
+  'http_path',
+  'http_path_field',
+  'database_name',
+  'credentials_info',
+  'service_account_info',
+  'catalog',
+  'query',
+  'encryption',
+  'account',
+  'warehouse',
+  'role',
+  'ssh',
+  'oauth2_client',
+];
+
+const extensionsRegistry = getExtensionsRegistry();
+
+const SSHTunnelSwitchComponent =
+  extensionsRegistry.get('ssh_tunnel.form.switch') ?? SSHTunnelSwitch;
+
+const FORM_FIELD_MAP = {
+  host: hostField,
+  http_path: httpPath,
+  http_path_field: httpPathField,
+  port: portField,
+  database: databaseField,
+  default_catalog: defaultCatalogField,
+  default_schema: defaultSchemaField,
+  username: usernameField,
+  password: passwordField,
+  oauth2_client: OAuth2ClientField,
+  access_token: accessTokenField,
+  database_name: displayField,
+  query: queryField,
+  encryption: forceSSLField,
+  credentials_info: EncryptedField,
+  service_account_info: EncryptedField,
+  catalog: TableCatalog,
+  warehouse: validatedInputField,
+  role: validatedInputField,
+  account: validatedInputField,
+  ssh: SSHTunnelSwitchComponent,
+};
+
+interface DatabaseConnectionFormProps {
+  isEditMode?: boolean;
+  sslForced: boolean;
+  editNewDb?: boolean;
+  dbModel: DatabaseForm;
+  db: Partial<DatabaseObject> | null;
+  onParametersChange: (
+    event: FormEvent<InputProps> | { target: HTMLInputElement },
+  ) => void;
+  onChange: (
+    event: FormEvent<InputProps> | { target: HTMLInputElement },
+  ) => void;
+  onQueryChange: (
+    event: FormEvent<InputProps> | { target: HTMLInputElement },
+  ) => void;
+  onParametersUploadFileChange?: (
+    event: FormEvent<InputProps> | { target: HTMLInputElement },
+  ) => void;
+  onExtraInputChange: (
+    event: FormEvent<InputProps> | { target: HTMLInputElement },
+  ) => void;
+  onEncryptedExtraInputChange: (
+    event: FormEvent<InputProps> | { target: HTMLInputElement },
+  ) => void;
+  onAddTableCatalog: () => void;
+  onRemoveTableCatalog: (idx: number) => void;
+  validationErrors: JsonObject | null;
+  getValidation: () => void;
+  clearValidationErrors: () => void;
+  getPlaceholder?: (field: string) => string | undefined;
+}
 
 const DatabaseConnectionForm = ({
   dbModel,
