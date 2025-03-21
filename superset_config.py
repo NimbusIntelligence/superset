@@ -36,7 +36,15 @@ SQLPASS = os.getenv("PASSWORD")
 SECRET_KEY = "YOUR_VERY_OWN_RANDOM_GENERATED_STRING"
 
 # Makes sure Snowflake is offered when adding a database connection
-PREFERRED_DATABASES = ["Snowflake"]
+PREFERRED_DATABASES = ["Local Snowflake"]
+
+# Disable other standard supported DBs
+DBS_AVAILABLE_DENYLIST = {
+    "postgresql": {"psycopg2", "auroradataapi"},
+    "gsheets": {"apsw"},
+    "shillelagh": {"apsw"},
+    "sqlite": {},
+}
 
 # Deal with SFCS header shenanigans
 ENABLE_CORS = True
