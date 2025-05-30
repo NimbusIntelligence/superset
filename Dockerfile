@@ -166,6 +166,9 @@ RUN mkdir -p \
       requirements \
     && touch superset/static/version_info.json
 
+COPY --chown=superset superset_config.py /app/pythonpath/
+ENV SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py
+
 # Install Playwright and optionally setup headless browsers
 ARG INCLUDE_CHROMIUM="true"
 ARG INCLUDE_FIREFOX="false"
@@ -248,7 +251,7 @@ RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
 RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
     uv pip install .
 
-RUN uv pip install .[postgres]
+RUN uv pip install .[postgres,snowflake,thumbnails,cors]
 RUN python -m compileall /app/superset
 
 USER superset
@@ -258,6 +261,6 @@ USER superset
 ######################################################################
 FROM lean AS ci
 USER root
-RUN uv pip install .[postgres]
+RUN uv pip install .[postgres,snowflake,thumbnails,cors]
 USER superset
 CMD ["/app/docker/entrypoints/docker-ci.sh"]
