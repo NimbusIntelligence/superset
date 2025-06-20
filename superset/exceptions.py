@@ -348,10 +348,8 @@ class OAuth2RedirectError(SupersetErrorException):
     - The redirect URL, so that the original tab can validate that the message from the
       second tab is coming from a valid origin.
 
-    See the `OAuth2RedirectMessage.tsx` component for more details of how this
+        See the `OAuth2RedirectMessage.tsx` component for more details of how this
     information is handled.
-
-    TODO (betodealmeida): change status to 403.
     """
 
     def __init__(self, url: str, tab_id: str, redirect_uri: str):

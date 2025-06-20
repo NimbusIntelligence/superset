@@ -80,7 +80,7 @@ export function useCatalogs(options: Params) {
 
   useEffect(() => {
     if (result.isError) {
-      onError?.(result.error);
+      onError?.(result.error as ClientErrorObject);
     }
   }, [result.isError, result.error, onError]);
 
@@ -92,7 +92,7 @@ export function useCatalogs(options: Params) {
             onSuccess?.(data || EMPTY_CATALOGS, forceRefresh);
           }
           if (isError) {
-            onError?.(result.error);
+            onError?.(result.error as ClientErrorObject);
           }
         });
       }

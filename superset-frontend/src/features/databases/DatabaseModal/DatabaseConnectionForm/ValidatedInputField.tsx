@@ -34,7 +34,7 @@ const FIELD_TEXT_MAP = {
     className: 'form-group-w-50',
   },
   role: {
-    label: 'Default role',
+    label: 'Role',
     placeholder: t('e.g. AccountAdmin'),
     className: 'form-group-w-50',
   },
@@ -57,9 +57,9 @@ export const validatedInputField = ({
     value={db?.parameters?.[field as keyof DatabaseParameters]}
     validationMethods={{ onBlur: getValidation }}
     errorMessage={validationErrors?.[field]}
-    placeholder={FIELD_TEXT_MAP[field].placeholder}
-    helpText={FIELD_TEXT_MAP[field].helpText}
-    label={FIELD_TEXT_MAP[field].label || field}
+    placeholder={FIELD_TEXT_MAP[field as FieldTextMapKey].placeholder}
+    helpText={FIELD_TEXT_MAP[field as 'account']?.helpText}
+    label={FIELD_TEXT_MAP[field as FieldTextMapKey].label || field}
     onChange={changeMethods.onParametersChange}
     className={FIELD_TEXT_MAP[field as 'warehouse' | 'role'].className || field}
   />

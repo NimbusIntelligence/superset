@@ -21,6 +21,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Any, Iterator, TYPE_CHECKING
 
+import logging
 import backoff
 import jwt
 from flask import current_app, url_for
@@ -36,6 +37,7 @@ if TYPE_CHECKING:
     from superset.models.core import Database, DatabaseUserOAuth2Tokens
 
 JWT_EXPIRATION = timedelta(minutes=5)
+logger = logging.getLogger("superset-oauth")
 
 
 @backoff.on_exception(
@@ -70,16 +72,23 @@ def get_oauth2_access_token(
         .one_or_none()
     )
     if token is None:
+        logger.critical("No token")
         return None
 
     if token.access_token and datetime.now() < token.access_token_expiration:
+        logger.critical("Access token: " + token.access_token)
         return token.access_token
 
     if token.refresh_token:
-        return refresh_oauth2_token(config, database_id, user_id, db_engine_spec, token)
+        refresh_token = refresh_oauth2_token(
+            config, database_id, user_id, db_engine_spec, token
+        )
+        logger.critical("Refresh token: " + refresh_token)
+        return refresh_token
 
     # since the access token is expired and there's no refresh token, delete the entry
     db.session.delete(token)
+    logger.critical("Token deleted")
 
     return None
 
@@ -111,7 +120,7 @@ def refresh_oauth2_token(
             seconds=token_response["expires_in"]
         )
         db.session.add(token)
-
+    logger.critical("Access token: " + token.access_token)
     return token.access_token
 
 
@@ -134,6 +143,7 @@ def encode_oauth2_state(state: OAuth2State) -> str:
 
     # Google OAuth2 needs periods to be escaped.
     encoded_state = encoded_state.replace(".", "%2E")
+    logger.critical("Encoded state: " + encoded_state)
 
     return encoded_state
 
@@ -179,7 +189,7 @@ def decode_oauth2_state(encoded_state: str) -> OAuth2State:
         algorithms=[current_app.config["DATABASE_OAUTH2_JWT_ALGORITHM"]],
     )
     state = oauth2_state_schema.load(payload)
-
+    logger.critical("Decoded state: " + str(state))
     return state
 
 

@@ -440,15 +440,17 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
     oauth2_token_request_uri = None
 
     @classmethod
-    def get_extra_params(cls, database: "Database") -> dict[str, Any]:
+    def get_extra_params(
+        cls, database: "Database", source: QuerySource | None = None
+    ) -> dict[str, Any]:
         """
         Add a user agent to be used in the requests.
         """
         extra: dict[str, Any] = BaseEngineSpec.get_extra_params(database)
         engine_params: dict[str, Any] = extra.setdefault("engine_params", {})
         connect_args: dict[str, Any] = engine_params.setdefault("connect_args", {})
-
-        connect_args.setdefault("application", USER_AGENT)
+        user_agent = get_user_agent(database, source)
+        connect_args.setdefault("application", user_agent)
 
         # populate OAuth2 URLs if not set, since they can be inferred from the account
         if oauth2_client_info := extra.get("oauth2_client_info"):
@@ -496,6 +498,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
             # remove hardcoded role so that the one from OAuth2 is used
             url = url.difference_update_query(["role"])
 
+        logger.critical("Impersonated url: " + url)
         return url
 
     @classmethod
@@ -540,6 +543,7 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
             auth=HTTPBasicAuth(config["id"], config["secret"]),
             timeout=timeout,
         )
+        logger.critical("Oauth token: " + str(response.json()))
         return response.json()
 
     @classmethod
@@ -559,4 +563,5 @@ class SnowflakeEngineSpec(PostgresBaseEngineSpec):
             auth=HTTPBasicAuth(config["id"], config["secret"]),
             timeout=timeout,
         )
+        logger.critical("Oauth fresh token: " + str(response.json()))
         return response.json()

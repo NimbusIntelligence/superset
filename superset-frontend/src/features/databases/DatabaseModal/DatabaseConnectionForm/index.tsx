@@ -16,7 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetTheme } from '@superset-ui/core';
+import { FormEvent } from 'react';
+import {
+  SupersetTheme,
+  JsonObject,
+  getExtensionsRegistry,
+} from '@superset-ui/core';
+import { InputProps } from 'antd/lib/input';
 import { Form } from 'src/components/Form';
 import {
   accessTokenField,
@@ -40,7 +46,6 @@ import { TableCatalog } from './TableCatalog';
 import { formScrollableStyles, validatedFormStyles } from '../styles';
 import { DatabaseForm, DatabaseObject } from '../../types';
 import SSHTunnelSwitch from '../SSHTunnelSwitch';
-
 export const FormFieldOrder = [
   'host',
   'port',
